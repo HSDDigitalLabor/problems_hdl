@@ -1,0 +1,9 @@
+submit50:
+  files: &submit50_files
+    - !exclude "*"
+    - !include "*.vhd"
+    - !require register_32bit.vhd
+
+check50:
+  files: *submit50_files
+  checks: checks/main.py
