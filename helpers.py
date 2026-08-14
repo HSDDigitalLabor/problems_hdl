@@ -26,8 +26,7 @@ def ensure_ghdl():
     except (FileNotFoundError, subprocess.CalledProcessError):
         print("GHDL wird installiert...")
         try:
-            subprocess.run(['sudo', 'apt', 'update'], check=True)
-            subprocess.run(['sudo', 'apt', 'install', '-y', 'ghdl'], check=True)
+            subprocess.run(['pip', 'install', 'ghdl'], check=True)
         except subprocess.CalledProcessError as e:
             raise Exception("GHDL Installation fehlgeschlagen: " + str(e))
 
