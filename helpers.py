@@ -27,6 +27,9 @@ def ensure_ghdl():
         print("GHDL wird installiert...")
         try:
             subprocess.run(['pip', 'install', 'ghdl'], check=True)
+            # Config-Verzeichnis erstellen
+            config_dir = os.path.expanduser('~/.config/ghdl')
+            os.makedirs(config_dir, exist_ok=True)
         except subprocess.CalledProcessError as e:
             raise Exception("GHDL Installation fehlgeschlagen: " + str(e))
 
