@@ -1,6 +1,13 @@
 import subprocess
 import check50
 import os
+import sys
+import urllib.request
+import tarfile
+
+GHDL_VERSION = "2.0.3"
+GHDL_INSTALL_DIR = os.path.expanduser("~/.local/ghdl")
+GHDL_BIN = os.path.join(GHDL_INSTALL_DIR, "bin", "ghdl")
 
 def format_output(text):
     """Formatiert die GHDL-Ausgabe"""
@@ -18,20 +25,39 @@ def format_output(text):
     return formatted_lines
 
 def ensure_ghdl():
-    """Stellt sicher, dass GHDL installiert ist"""
+    """Stellt sicher, dass GHDL als prebuilt binary vorhanden ist"""
+    if os.path.exists(GHDL_BIN):
+        # GHDL ist bereits installiert
+        return
+    
+    print(f"GHDL wird heruntergeladen und installiert...")
     try:
-        subprocess.run(['ghdl', '--version'], 
-                      capture_output=True, 
-                      check=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        print("GHDL wird installiert...")
-        try:
-            subprocess.run(['pip', 'install', 'ghdl'], check=True)
-            # Config-Verzeichnis erstellen
-            config_dir = os.path.expanduser('~/.config/ghdl')
-            os.makedirs(config_dir, exist_ok=True)
-        except subprocess.CalledProcessError as e:
-            raise Exception("GHDL Installation fehlgeschlagen: " + str(e))
+        # Erstelle das Installationsverzeichnis
+        os.makedirs(GHDL_INSTALL_DIR, exist_ok=True)
+        
+        # Download URL für Linux x86_64
+        url = f"https://github.com/ghdl/ghdl/releases/download/v{GHDL_VERSION}/ghdl-{GHDL_VERSION}-linux-x86_64.tar.gz"
+        tar_file = os.path.join(GHDL_INSTALL_DIR, f"ghdl-{GHDL_VERSION}.tar.gz")
+        
+        print(f"Downloade von {url}...")
+        urllib.request.urlretrieve(url, tar_file)
+        
+        # Entpacke das Archiv
+        print("Entpacke GHDL...")
+        with tarfile.open(tar_file, "r:gz") as tar:
+            tar.extractall(GHDL_INSTALL_DIR)
+        
+        # Lösche das tar.gz nach dem Entpacken
+        os.remove(tar_file)
+        
+        # Prüfe ob GHDL erfolgreich installiert wurde
+        if not os.path.exists(GHDL_BIN):
+            raise Exception(f"GHDL binary nicht gefunden unter {GHDL_BIN}")
+        
+        print(f"GHDL erfolgreich installiert unter {GHDL_INSTALL_DIR}")
+        
+    except Exception as e:
+        raise Exception(f"GHDL Installation fehlgeschlagen: {str(e)}")
 
 def ensure_vaporview():
     """Stellt sicher, dass vaporview VSCode extension installiert ist"""
@@ -53,8 +79,9 @@ def ensure_vaporview():
 
 def run_testbench(tb_name, vhd_file, tb_file, vcd_file, stop_time="1us"):
     """Führt eine VHDL Testbench aus und gibt formatierte Ausgabe zurück"""
+    ensure_ghdl()
     result = subprocess.run(
-        ['ghdl', 'elab-run', tb_name, f'--vcd={vcd_file}', f'--stop-time={stop_time}'],
+        [GHDL_BIN, 'elab-run', tb_name, f'--vcd={vcd_file}', f'--stop-time={stop_time}'],
         capture_output=True,
         text=True
     )
@@ -74,7 +101,8 @@ def run_testbench(tb_name, vhd_file, tb_file, vcd_file, stop_time="1us"):
 
 def compile_vhdl(vhd_file):
     """Kompiliert eine VHDL-Datei. Exception bei Fehler."""
-    analyze_result = subprocess.run(['ghdl', 'analyze', vhd_file], 
+    ensure_ghdl()
+    analyze_result = subprocess.run([GHDL_BIN, 'analyze', vhd_file], 
                   capture_output=True,
                   text=True)
     
