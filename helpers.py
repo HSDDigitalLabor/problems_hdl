@@ -4,8 +4,9 @@ import os
 import sys
 import urllib.request
 import tarfile
+import shutil
 
-GHDL_VERSION = "2.0.3"
+GHDL_VERSION = "6.0.0"
 GHDL_INSTALL_DIR = os.path.expanduser("~/.local/ghdl")
 GHDL_BIN = os.path.join(GHDL_INSTALL_DIR, "bin", "ghdl")
 
@@ -35,8 +36,8 @@ def ensure_ghdl():
         # Erstelle das Installationsverzeichnis
         os.makedirs(GHDL_INSTALL_DIR, exist_ok=True)
         
-        # Download URL für Linux x86_64
-        url = f"https://github.com/ghdl/ghdl/releases/download/v{GHDL_VERSION}/ghdl-{GHDL_VERSION}-linux-x86_64.tar.gz"
+        # Download URL für Linux x86_64 mcode backend
+        url = f"https://github.com/ghdl/ghdl/releases/download/v{GHDL_VERSION}/ghdl-mcode-{GHDL_VERSION}-ubuntu24.04-x86_64.tar.gz"
         tar_file = os.path.join(GHDL_INSTALL_DIR, f"ghdl-{GHDL_VERSION}.tar.gz")
         
         print(f"Downloade von {url}...")
@@ -49,6 +50,19 @@ def ensure_ghdl():
         
         # Lösche das tar.gz nach dem Entpacken
         os.remove(tar_file)
+        
+        # Verschiebe die Inhalte aus dem verschachtelten Verzeichnis nach oben
+        nested_dir = os.path.join(GHDL_INSTALL_DIR, f"ghdl-mcode-{GHDL_VERSION}-ubuntu24.04-x86_64")
+        if os.path.exists(nested_dir):
+            # Verschiebe bin/ und lib/ direkt in GHDL_INSTALL_DIR
+            for item in os.listdir(nested_dir):
+                src = os.path.join(nested_dir, item)
+                dst = os.path.join(GHDL_INSTALL_DIR, item)
+                if os.path.exists(dst):
+                    shutil.rmtree(dst) if os.path.isdir(dst) else os.remove(dst)
+                shutil.move(src, dst)
+            # Lösche das jetzt leere nested Verzeichnis
+            os.rmdir(nested_dir)
         
         # Prüfe ob GHDL erfolgreich installiert wurde
         if not os.path.exists(GHDL_BIN):
