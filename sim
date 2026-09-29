@@ -12,7 +12,7 @@ info() { echo "${BLU}>> $*${RST}"; }
 err()  { echo "${RED}FEHLER: $*${RST}"; }
 
 SLUG=$1
-[ -n "$SLUG" ] || { echo "Aufruf: ../sim/sim <org>/<repo>/<branch>/<aufgabe>"; exit 1; }
+[ -n "$SLUG" ] || { echo "Aufruf: simulation <org>/<repo>/<branch>/<aufgabe>"; exit 1; }
 
 ORG_REPO=$(echo "$SLUG" | cut -d/ -f1-2)
 BRANCH=$(echo "$SLUG" | cut -d/ -f3)
@@ -56,13 +56,27 @@ info "Kompiliere ..."
 
 # 5. Simulieren: Pfade entfernen, dann formatieren
 info "Simuliere ..."
+rm -f "$M.vcd"
+OUT="$TMP/sim.out"
+set +e
 "$GHDL" elab-run --workdir="$TMP" "${M}_tb" --vcd="$M.vcd" --stop-time=1us 2>&1 \
+  | tee "$OUT" \
   | sed -E \
       -e 's#^.*_tb\.vhd:[0-9]+:[0-9]+:(@[^:]*):\(report note\): #[\1] #' \
       -e 's#[^ ]*_tb\.vhd:[0-9]+:[0-9]+:##' \
       -e "/\((assertion [a-z]+|error)\)/{s/.*/${RED}&${RST}/;b}" \
       -e "/warning\)/{s/.*/${YEL}&${RST}/;b}" \
-      -e "s/^(\[@[^]]*\])/${CYN}\1${RST}/" \
-  || true
+      -e "s/^(\[@[^]]*\])/${CYN}\1${RST}/"
+RC=${PIPESTATUS[0]}
+set -e
+
+# Fehlschlag erst am Ende bewerten
+NERR=$(grep -ciE 'assertion (error|failure)' "$OUT" || true)
+
+if [ "$RC" -ne 0 ] || [ "$NERR" -gt 0 ]; then
+  echo "${RED}>> Simulation fehlgeschlagen ($NERR Assertion-Fehler, ghdl-Exit-Code $RC)${RST}"
+  [ -f "$M.vcd" ] && echo "${YEL}   Die Waveform $M.vcd zeigt den Verlauf zum Debuggen.${RST}"
+  exit 1
+fi
 
 echo "${GRN}>> Fertig. Waveform: $M.vcd (mit Vaporview öffnen)${RST}"
