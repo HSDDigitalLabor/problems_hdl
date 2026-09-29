@@ -51,13 +51,17 @@ else
   echo "${YEL}'code' nicht gefunden - Vaporview bitte manuell installieren.${RST}"
 fi
 
-# 3. Testbench Download in Temp-Ordner
+# 3. Testbench Downlaod via Git (shallow + sparse) in Temp-Ordner
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 info "Hole Testbench ..."
-curl -fsSL "https://codeload.github.com/$ORG_REPO/tar.gz/$BRANCH" \
-  | tar -xz -C "$TMP" --strip-components=1 --wildcards "*/$PROBLEM/checks/${M}_tb.vhd"
-TB="$TMP/$PROBLEM/checks/${M}_tb.vhd"
+export GIT_TERMINAL_PROMPT=0
+git clone -q --depth 1 --no-checkout --branch "$BRANCH" \
+    "https://github.com/$ORG_REPO.git" "$TMP/repo" >/dev/null 2>&1 \
+  || { err "Repository/Branch '$ORG_REPO@$BRANCH' konnte nicht geladen werden"; exit 1; }
+git -C "$TMP/repo" sparse-checkout set --no-cone "/$PROBLEM/checks/${M}_tb.vhd" >/dev/null 2>&1
+git -C "$TMP/repo" checkout -q >/dev/null 2>&1
+TB="$TMP/repo/$PROBLEM/checks/${M}_tb.vhd"
 [ -f "$TB" ] || { err "Testbench für '$M' nicht gefunden"; exit 1; }
 
 # 4. Analysieren
