@@ -1,0 +1,68 @@
+#!/bin/bash
+# Aufruf im Aufgabenordner mit CS50-Slug: ../sim <org>/<repo>/<branch>/<aufgabe>
+set -eo pipefail
+
+# Farbig formatierte Ausgaben nur wenn die Ausgabe ein Terminal ist
+if [ -t 1 ]; then
+  RED=$'\e[31m'; GRN=$'\e[32m'; YEL=$'\e[33m'; BLU=$'\e[1;34m'; CYN=$'\e[36m'; RST=$'\e[0m'
+else
+  RED=""; GRN=""; YEL=""; BLU=""; CYN=""; RST=""
+fi
+info() { echo "${BLU}>> $*${RST}"; }
+err()  { echo "${RED}FEHLER: $*${RST}"; }
+
+SLUG=$1
+[ -n "$SLUG" ] || { echo "Aufruf: ../sim/sim <org>/<repo>/<branch>/<aufgabe>"; exit 1; }
+
+ORG_REPO=$(echo "$SLUG" | cut -d/ -f1-2)
+BRANCH=$(echo "$SLUG" | cut -d/ -f3)
+PROBLEM=$(echo "$SLUG" | cut -d/ -f4-)
+M=$(basename "$SLUG")
+
+[ -f "$M.vhd" ] || { err "$M.vhd nicht gefunden. Bist du im Ordner '$M'?"; exit 1; }
+
+# 1. GHDL per apt (einmalig), fester Pfad
+if [ ! -x /usr/bin/ghdl ]; then
+  info "Installiere GHDL (einmalig) ..."
+  sudo apt-get update -qq
+  sudo apt-get install -y ghdl
+fi
+GHDL=/usr/bin/ghdl
+
+# 2. Vaporview-Extension in VSCode installieren (optional falls nicht installiert, bricht nie ab)
+if command -v code >/dev/null 2>&1; then
+  if ! code --list-extensions 2>/dev/null | grep -qi '^lramseyer.vaporview$'; then
+    info "Installiere VS Code Extension Vaporview (einmalig) ..."
+    code --install-extension lramseyer.vaporview >/dev/null 2>&1 \
+      && echo "${GRN}Vaporview installiert.${RST}" \
+      || echo "${YEL}Vaporview konnte nicht installiert werden (optional).${RST}"
+  fi
+else
+  echo "${YEL}'code' nicht gefunden - Vaporview bitte manuell installieren.${RST}"
+fi
+
+# 3. Testbench Download in Temp-Ordner
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+info "Hole Testbench ..."
+curl -fsSL "https://codeload.github.com/$ORG_REPO/tar.gz/$BRANCH" \
+  | tar -xz -C "$TMP" --strip-components=1 --wildcards "*/$PROBLEM/checks/${M}_tb.vhd"
+TB="$TMP/$PROBLEM/checks/${M}_tb.vhd"
+[ -f "$TB" ] || { err "Testbench für '$M' nicht gefunden"; exit 1; }
+
+# 4. Analysieren
+info "Kompiliere ..."
+"$GHDL" analyze --workdir="$TMP" "$M.vhd" "$TB"
+
+# 5. Simulieren: Pfade entfernen, dann formatieren
+info "Simuliere ..."
+"$GHDL" elab-run --workdir="$TMP" "${M}_tb" --vcd="$M.vcd" --stop-time=1us 2>&1 \
+  | sed -E \
+      -e 's#^.*_tb\.vhd:[0-9]+:[0-9]+:(@[^:]*):\(report note\): #[\1] #' \
+      -e 's#[^ ]*_tb\.vhd:[0-9]+:[0-9]+:##' \
+      -e "/\((assertion [a-z]+|error)\)/{s/.*/${RED}&${RST}/;b}" \
+      -e "/warning\)/{s/.*/${YEL}&${RST}/;b}" \
+      -e "s/^(\[@[^]]*\])/${CYN}\1${RST}/" \
+  || true
+
+echo "${GRN}>> Fertig. Waveform: $M.vcd (mit Vaporview öffnen)${RST}"
