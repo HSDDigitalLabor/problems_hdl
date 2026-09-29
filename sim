@@ -21,13 +21,23 @@ M=$(basename "$SLUG")
 
 [ -f "$M.vhd" ] || { err "$M.vhd nicht gefunden. Bist du im Ordner '$M'?"; exit 1; }
 
-# 1. GHDL per apt (einmalig), fester Pfad
-if [ ! -x /usr/bin/ghdl ]; then
-  info "Installiere GHDL (einmalig) ..."
-  sudo apt-get update -qq
-  sudo apt-get install -y ghdl
+# 1. GHDL-Installation als Prebuilt-Binary (gleiche Version wie im check50-Check), Ablage in ~/.local
+GHDL_VERSION="6.0.0"
+GHDL_DIR="$HOME/.local/ghdl"
+GHDL="$GHDL_DIR/bin/ghdl"
+if [ ! -x "$GHDL" ]; then
+  info "Installiere GHDL $GHDL_VERSION (einmalig) ..."
+  GTMP=$(mktemp -d)
+  curl -fsSL "https://github.com/ghdl/ghdl/releases/download/v$GHDL_VERSION/ghdl-mcode-$GHDL_VERSION-ubuntu24.04-x86_64.tar.gz" \
+    | tar -xz -C "$GTMP"
+  # Verschachtelten Ordner erkennen (bin/ghdl suchen)
+  FOUND=$(find "$GTMP" -path '*/bin/ghdl' | head -1)
+  [ -n "$FOUND" ] || { err "GHDL-Archiv enthält kein bin/ghdl"; rm -rf "$GTMP"; exit 1; }
+  rm -rf "$GHDL_DIR"
+  mkdir -p "$(dirname "$GHDL_DIR")"
+  mv "$(dirname "$(dirname "$FOUND")")" "$GHDL_DIR"
+  rm -rf "$GTMP"
 fi
-GHDL=/usr/bin/ghdl
 
 # 2. Vaporview-Extension in VSCode installieren (optional falls nicht installiert, bricht nie ab)
 if command -v code >/dev/null 2>&1; then
