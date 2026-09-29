@@ -73,10 +73,10 @@ info "Kompiliere ..."
 
 # 5. Simulieren: Pfade entfernen, dann formatieren
 info "Simuliere ..."
-rm -f "$M.vcd"
+rm -f "${M}_waveform.vcd"
 OUT="$TMP/sim.out"
 set +e
-"$GHDL" elab-run --workdir="$TMP" "${M}_tb" --vcd="$M.vcd" --stop-time=1us 2>&1 \
+"$GHDL" elab-run --workdir="$TMP" "${M}_tb" --vcd="${M}_waveform.vcd" --stop-time=1us 2>&1 \
   | tee "$OUT" \
   | sed -E \
       -e 's#^.*_tb\.vhd:[0-9]+:[0-9]+:(@[^:]*):\(report note\): #[\1] #' \
@@ -92,8 +92,8 @@ NERR=$(grep -ciE 'assertion (error|failure)' "$OUT" || true)
 
 if [ "$RC" -ne 0 ] || [ "$NERR" -gt 0 ]; then
   echo "${RED}>> Simulation fehlgeschlagen ($NERR Assertion-Fehler, ghdl-Exit-Code $RC)${RST}"
-  [ -f "$M.vcd" ] && echo "${YEL}   Die Waveform $M.vcd zeigt den Verlauf zum Debuggen.${RST}"
+  [ -f "${M}_waveform.vcd" ] && echo "${YEL}   Die Waveform ${M}_waveform.vcd zeigt den Verlauf zum Debuggen.${RST}"
   exit 1
 fi
 
-echo "${GRN}>> Fertig. Waveform: $M.vcd (mit Vaporview öffnen)${RST}"
+echo "${GRN}>> Fertig. Waveform-Datei ${M}_waveform.vcd kann mit Vaporview geöffnet werden.${RST}"
