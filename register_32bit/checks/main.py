@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 import helpers
 
 CHECKS_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(os.path.dirname(CHECKS_DIR))
+ROOT_DIR = os.environ.get("PWD", os.getcwd())
 
 # Konfiguration
 MODULE_NAME = "register_32bit"
