@@ -1,6 +1,6 @@
 #!/bin/bash
 # Skript zur Ausfuehrung von GHDL im GitHub Codespace. Installiere Skript im GitHub Codespace:
-# mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/HSDDigitalLabor/problems_hdl/refs/heads/diginfo2026/sim -o ~/.local/bin/simulation && chmod +x ~/.local/bin/simulation
+# code --install-extension rjyoung.vscode-modern-vhdl-support ; mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/HSDDigitalLabor/problems_hdl/refs/heads/diginfo2026/sim -o ~/.local/bin/simulation && chmod +x ~/.local/bin/simulation
 # Aufruf im Aufgabenordner mit CS50-Slug: simulation <org>/<repo>/<branch>/<aufgabe>
 
 set -eo pipefail
