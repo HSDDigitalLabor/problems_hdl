@@ -2,6 +2,7 @@
 # Skript zur Ausfuehrung von GHDL im GitHub Codespace. Installiere Skript im GitHub Codespace:
 # code --install-extension rjyoung.vscode-modern-vhdl-support ; mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/HSDDigitalLabor/problems_hdl/refs/heads/diginfo2026/sim -o ~/.local/bin/simulation && chmod +x ~/.local/bin/simulation
 # Aufruf im Aufgabenordner mit CS50-Slug: simulation <org>/<repo>/<branch>/<aufgabe>
+# Oder lokal: simulation [--local] <aufgabe> [--local]
 
 set -eo pipefail
 
@@ -14,12 +15,29 @@ fi
 info() { echo "${BLU}>> $*${RST}"; }
 err()  { echo "${RED}FEHLER: $*${RST}"; }
 
-SLUG=$1
-[ -n "$SLUG" ] || { echo "Aufruf: simulation <org>/<repo>/<branch>/<aufgabe>"; exit 1; }
+# Parameter parsen (--local Flag herausfiltern)
+LOCAL_MODE=false
+ARGS=()
 
-ORG_REPO=$(echo "$SLUG" | cut -d/ -f1-2)
-BRANCH=$(echo "$SLUG" | cut -d/ -f3)
-PROBLEM=$(echo "$SLUG" | cut -d/ -f4-)
+for arg in "$@"; do
+  if [ "$arg" = "--local" ]; then
+    LOCAL_MODE=true
+  else
+    ARGS+=("$arg")
+  fi
+done
+
+SLUG="${ARGS[0]}"
+
+if [ -z "$SLUG" ]; then
+  if [ "$LOCAL_MODE" = true ]; then
+    echo "Aufruf: simulation --local <aufgabe>"
+  else
+    echo "Aufruf: simulation <org>/<repo>/<branch>/<aufgabe> [--local]"
+  fi
+  exit 1
+fi
+
 M=$(basename "$SLUG")
 
 [ -f "$M.vhd" ] || { err "$M.vhd nicht gefunden. Bist du im Ordner '$M'?"; exit 1; }
@@ -54,18 +72,29 @@ else
   echo "${YEL}'code' nicht gefunden - Vaporview bitte manuell installieren.${RST}"
 fi
 
-# 3. Testbench Downlaod via Git (shallow + sparse) in Temp-Ordner
+# 3. Testbench Downlaod via Git (shallow + sparse) in Temp-Ordner oder --local aus /checks
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-info "Hole Testbench ..."
-export GIT_TERMINAL_PROMPT=0
-git clone -q --depth 1 --no-checkout --branch "$BRANCH" \
-    "https://github.com/$ORG_REPO.git" "$TMP/repo" >/dev/null 2>&1 \
-  || { err "Repository/Branch '$ORG_REPO@$BRANCH' konnte nicht geladen werden"; exit 1; }
-git -C "$TMP/repo" sparse-checkout set --no-cone "/$PROBLEM/checks/${M}_tb.vhd" >/dev/null 2>&1
-git -C "$TMP/repo" checkout -q >/dev/null 2>&1
-TB="$TMP/repo/$PROBLEM/checks/${M}_tb.vhd"
-[ -f "$TB" ] || { err "Testbench für '$M' nicht gefunden"; exit 1; }
+
+if [ "$LOCAL_MODE" = true ]; then
+  info "Verwende lokale Testbench ..."
+  TB="./checks/${M}_tb.vhd"
+  [ -f "$TB" ] || { err "Lokale Testbench '$TB' nicht im aktuellen Verzeichnis gefunden."; exit 1; }
+else
+  ORG_REPO=$(echo "$SLUG" | cut -d/ -f1-2)
+  BRANCH=$(echo "$SLUG" | cut -d/ -f3)
+  PROBLEM=$(echo "$SLUG" | cut -d/ -f4-)
+
+  info "Hole Testbench ..."
+  export GIT_TERMINAL_PROMPT=0
+  git clone -q --depth 1 --no-checkout --branch "$BRANCH" \
+      "https://github.com/$ORG_REPO.git" "$TMP/repo" >/dev/null 2>&1 \
+    || { err "Repository/Branch '$ORG_REPO@$BRANCH' konnte nicht geladen werden"; exit 1; }
+  git -C "$TMP/repo" sparse-checkout set --no-cone "/$PROBLEM/checks/${M}_tb.vhd" >/dev/null 2>&1
+  git -C "$TMP/repo" checkout -q >/dev/null 2>&1
+  TB="$TMP/repo/$PROBLEM/checks/${M}_tb.vhd"
+  [ -f "$TB" ] || { err "Testbench für '$M' nicht im Repository gefunden"; exit 1; }
+fi
 
 # 4. Analysieren
 info "Kompiliere ..."
