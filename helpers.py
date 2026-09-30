@@ -91,7 +91,7 @@ def ensure_vaporview():
         except subprocess.CalledProcessError:
             print("Vaporview konnte nicht installiert werden (optional)")
 
-def run_testbench(tb_name, vhd_file, tb_file, vcd_file, stop_time="1us"):
+def run_testbench(tb_name, vhd_file, tb_file, vcd_file, stop_time="100us"):
     """Führt eine VHDL Testbench aus und gibt formatierte Ausgabe zurück"""
     ensure_ghdl()
     result = subprocess.run(
