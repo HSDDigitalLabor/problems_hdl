@@ -43,9 +43,9 @@ begin
         -- Test 1: Reset
         report "Test 1: Reset" severity note;
         data_in <= x"DEADBEEF";
-        reset <= '1';
-        wait for CLK_PERIOD;
         reset <= '0';
+        wait for CLK_PERIOD;
+        reset <= '1';
         wait for 1 ns;
         assert data_out = x"00000000" report "Reset failed!" severity error;
 
@@ -75,11 +75,11 @@ begin
 
         -- Test 6: Reset with data in register
         report "Test 6: Reset with data in register" severity note;
-        reset <= '1';
+        reset <= '0';
         wait for 1 ns;
         assert data_out = x"00000000" report "Reset with data failed!" severity error;
         wait for CLK_PERIOD;
-        reset <= '0';
+        reset <= '1';
 
         -- End simulation
         report "Simulation finished." severity note;
