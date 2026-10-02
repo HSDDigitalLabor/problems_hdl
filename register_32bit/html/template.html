@@ -2,16 +2,16 @@
 
 <p>{% include "file.html" %}
   implementieren Sie ein synchrones <strong>32-Bit-Register</strong> in VHDL in der Entity <code>register_32bit</code>.
-  Das Register besitzt einen Dateneingang <code class="text-danger border border-dark">data_in</code> (32 Bit),
-  einen Datenausgang <code class="text-danger border border-dark">data_out</code> (32 Bit),
-  ein Taktsignal <code class="text-danger border border-dark">clk</code> sowie ein asynchrones Rücksetzsignal
-  <code class="text-danger border border-dark">reset</code>.
-  Bei aktivem Reset (<code class="text-danger border border-dark">'0' low-active</code>) soll der Ausgang sofort auf <code>0</code> gesetzt werden.
+  Das Register besitzt einen Dateneingang <code>data_in</code> (32 Bit),
+  einen Datenausgang <code>data_out</code> (32 Bit),
+  ein Taktsignal <code>clk</code> sowie ein asynchrones Rücksetzsignal
+  <code>reset</code>.
+  Bei aktivem Reset (<code>'0' low-active</code>) soll der Ausgang sofort auf <code>0</code> gesetzt werden.
   Mit jeder steigenden Taktflanke von <code>clk</code> wird der Wert an <code>data_in</code> übernommen und an <code>data_out</code> ausgegeben.
 </p>
-
+<br>
 <details>
-  <summary>Hinweise</summary>
+  <summary><strong>Hinweise</strong></summary>
   <ul>
     <li>
       Verwenden Sie die Bibliothek <code>ieee.std_logic_1164.all</code> für die Datentypen <code>std_logic</code> und <code>std_logic_vector</code>.
@@ -20,49 +20,44 @@
       Achten Sie darauf, dass das Signal <code>reset</code> <strong>asynchron</strong> ausgewertet wird (d.&nbsp;h. vor der Taktflankenprüfung im <code>process</code>).
     </li>
     <li>
-      Verwenden Sie die Funktion <code class="text-danger border border-dark">rising_edge(clk)</code> zur Erkennung der steigenden Taktflanke.
+      Verwenden Sie die Funktion <code>rising_edge(clk)</code> zur Erkennung der steigenden Taktflanke.
     </li>
     <li>
       Um alle 32 Bits gleichzeitig auf <code>'0'</code> zu setzen, empfiehlt sich das Aggregat:
-      <div class="alert alert-secondary mt-1 mb-1">
-        <code class="text-dark font-weight-bold">data_out &lt;= (others =&gt; '0');</code>
-      </div>
+      <code>data_out &lt;= (others =&gt; '0');</code>
     </li>
     <li>
       Für weitere Details zur Syntax von Prozessen und Registern in VHDL können Sie folgendes Tutorial konsultieren:
       <ul>
         <li>
-          <a href="https://www.nandland.com/vhdl/tutorials/tutorial-flip-flop-vhdl.html">
-            www.nandland.com/vhdl/tutorials/tutorial-flip-flop-vhdl.html
+          <a href="https://nandland.com/a-very-special-keyword-process/">
+            www.nandland.com/a-very-special-keyword-process/
           </a>
         </li>
       </ul>
     </li>
   </ul>
 </details>
-
+<br>
 <!-- {% include "demo.html" %} -->
 
 {% include "before_you_begin_hdl.html" %}
 
 {% include "how_to_test_head_hdl.html" %}
 
-Betrachten sie neben den möglichen Warungen und Fehlermeldungen in der Konsole auch die folgenden Daten in Ihrem Register im Waveform-Viewer:
+<p>
+  Betrachten sie neben den möglichen Warungen und Fehlermeldungen in der Konsole auch die folgenden Daten in Ihrem Register im Waveform-Viewer:
+</p>
 <ul>
-  <li>Testen des asynchronen Resets:
-    <div class="alert alert-primary">
-      <code class="text-dark font-weight-bold">reset &lt;= '0'; -- data_out muss sofort 0x00000000 annehmen</code>
-    </div>
+  <li>
+    Testen des asynchronen Resets:<br>
+    <code>reset &lt;= '0'; -- data_out muss sofort 0x00000000 annehmen</code>
   </li>
-
-  <li>Testen der Datenübernahme bei steigender Taktflanke:
-    <div class="alert alert-primary">
-      <code class="text-dark font-weight-bold">reset &lt;= '0'; data_in &lt;= x"baad_cofe"; clk &lt;= '1';</code>
-    </div>
-    Nach der steigenden Flanke sollte gelten:
-    <div class="alert alert-primary">
-      <code class="text-dark font-weight-bold">data_out = x"baad_cofe"</code>
-    </div>
+  <li>
+    Testen der Datenübernahme bei steigender Taktflanke:<br>
+    <code>reset &lt;= '0'; data_in &lt;= x"baad_c0fe"; clk &lt;= '1';</code><br>
+    Nach der steigenden Flanke sollte gelten:<br>
+    <code>data_out = x"baad_cofe"</code>
   </li>
 </ul>
 
