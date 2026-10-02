@@ -1,0 +1,88 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  implementieren Sie einen <strong>I²S-Transmitter</strong> in VHDL in der Entity <code>i2s_transmitter</code>.
+  Dieses Modul dient als Schnittstelle zwischen der digitalen Signalverarbeitung auf dem FPGA und einem externen <strong>Audio-DAC</strong> (Digital-to-Analog Converter).
+  Es nimmt parallele 16-Bit-Audiodaten für den linken (<code class="text-danger border border-dark">data_left</code>) sowie den rechten (<code class="text-danger border border-dark">data_right</code>) Kanal entgegen und serialisiert diese auf die Datenleitung <code class="text-danger border border-dark">sdata</code>.
+  Die Steuerung erfolgt synchron über das Bit-Taktsignal <code class="text-danger border border-dark">bclk</code> und das Kanalwahlsignal <code class="text-danger border border-dark">lrclk</code> (Word Select).
+</p>
+
+<details>
+  <summary>Hintergrund: Was ist I²S?</summary>
+  <ul>
+    <li>
+      <strong>Definition &amp; Zweck:</strong> <strong>I²S (Inter-IC Sound)</strong> ist ein serieller Busstandard, der speziell für die digitale Übertragung von Audiodaten zwischen integrierten Schaltkreisen (z.&nbsp;B. FPGA, DSP, Audiocodec, DAC) entwickelt wurde.
+    </li>
+    <li>
+      <strong>Historie:</strong> Die Schnittstelle wurde <strong>1986 von Philips</strong> (heute NXP) im Zuge des CD-Booms standardisiert, um digitale Audiodaten intern mit minimalem Pin-Aufwand und ohne Jitter-Probleme an D/A-Wandlerbausteine zu übermitteln.
+    </li>
+    <li>
+      <strong>Einsatz FPGA an Audio-DAC:</strong> Auf dem FPGA erzeugte oder verarbeitete Audiodaten (hier 16-Bit-Stereo-Samples) liegen parallel vor. Um sie mit möglichst wenigen Pins störungsfrei an den Audio-DAC zu übertragen, wandelt der Transmitter sie in einen kontinuierlichen, synchronen Bitstrom um.
+    </li>
+    <li>
+      <strong>Die Signalleitungen:</strong>
+      <ul>
+        <li><code>bclk</code> (Bit Clock): Taktet jedes einzelne Datenbit.</li>
+        <li><code>lrclk</code> (Word Select): Schaltet zwischen linkem (<code>'0'</code>) und rechtem Kanal (<code>'1'</code>) um und definiert die Abtastrate.</li>
+        <li><code>sdata</code> (Serial Data): Überträgt die eigentlichen Audiodaten bitweise, beginnend mit dem höchstwertigen Bit (MSB first).</li>
+      </ul>
+    </li>
+  </ul>
+</details>
+
+<details>
+  <summary>Hinweise zur Implementierung</summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code> für die Datentypen <code>std_logic</code>, <code>std_logic_vector</code>, <code>signed</code> und <code>unsigned</code>.
+    </li>
+    <li>
+      <strong>I²S 1-Takt-Verzögerung (Delay):</strong> Gemäß I²S-Standard beginnt die Übertragung der Nutzdaten (MSB) exakt <strong>einen Taktzyklus nach der Flanke</strong> von <code>lrclk</code>. Im ersten Zyklus nach der Flanke wird das Schieberegister geladen, erst mit dem darauffolgenden Takt beginnt das Ausgeben der Audio-Bits auf <code>sdata</code>.
+    </li>
+    <li>
+      Die Audiodaten werden pro Kanal in einem 32-Bit-Zeitschlitz übertragen. Da die Eingangswerte eine Breite von 16 Bit aufweisen, werden sie MSB-bündig in die oberen 16 Bits eines 32-Bit-Schieberegisters geladen und die unteren 16 Bits mit Nullen aufgefüllt (Zero-Padding). Zusammen mit dem 1-Takt-Versatz dauert es daher 17 Takte nach der Flanke, bis die nachfolgenden Nullen erscheinen.
+    </li>
+    <li>
+      Konvertieren Sie die Eingänge <code>data_left</code> und <code>data_right</code> vor der Zuweisung an das interne Schieberegister mit <code>std_logic_vector(...)</code>.
+    </li>
+    <li>
+      Nutzen Sie zur Erkennung eines Kanalwechsels ein getaktetes Register <code>lrclk_d</code>, um die Zustandsänderung auf <code>lrclk</code> (<code>lrclk_d /= lrclk</code>) zu detektieren.
+    </li>
+    <li>
+      Bei einem Kanalwechsel wird der Bit-Zähler zurückgesetzt und das entsprechende Audiosignal geladen. Innerhalb des Kanals wird das Register pro Takt um eine Stelle nach links geschoben und das oberste Bit (Bit 31) an <code>sdata</code> ausgegeben.
+    </li>
+    <li>
+      Das Rücksetzsignal <code>rst</code> ist <strong>synchron</strong> und low-aktiv (<code>'0'</code>) auszuwerten.
+    </li>
+  </ul>
+</details>
+
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+Betrachten Sie neben eventuellen Meldungen in der Konsole folgende Verläufe im Waveform-Viewer:
+<ul>
+  <li>Testen des synchronen Resets:
+    <div class="alert alert-primary">
+      <code class="text-dark font-weight-bold">rst &lt;= '0'; -- sdata und interne Zähler müssen nach der nächsten steigenden Taktflanke von bclk '0' annehmen</code>
+    </div>
+  </li>
+
+  <li>Überprüfung der seriellen Datenausgabe bei Kanalwechsel (<code>rst &lt;= '1'</code>):
+    <div class="alert alert-primary">
+      <code class="text-dark font-weight-bold">-- Takt nach lrclk-Flanke: 1 Takt I²S-Verzögerung (Laden des Schieberegisters)</code><br>
+      <code class="text-dark font-weight-bold">-- Ab 2. Takt: MSB zuerst auf sdata (16 Audiobits, gefolgt von 16 Nullen)</code>
+    </div>
+  </li>
+</ul>
+
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}

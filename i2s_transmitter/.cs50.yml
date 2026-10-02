@@ -1,0 +1,12 @@
+submit50:
+  files: &submit50_files
+    - !exclude "*"
+    - !include "*.vhd"
+    - !require i2s_transmitter.vhd
+
+check50:
+  files: *submit50_files
+  checks: checks/main.py
+
+dependencies:
+  - ghdl
