@@ -1,0 +1,72 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  implementieren Sie einen synchronen Taktteiler (Clock Divider) in VHDL in der Entity <code>clk_divider</code> für ein <strong>I²S-Audiointerface</strong>.
+  Ausgehend von einem Master Clock (<code class="text-danger border border-dark">clk_24_576m</code>) mit <strong>24.576&nbsp;MHz</strong> werden die für die digitale Audioübertragung erforderlichen Taktsignale synchron generiert:
+</p>
+
+<ul>
+  <li>
+    <strong>BCLK (Bit Clock / Serial Clock) an <code class="text-danger border border-dark">bclk</code>:</strong> Beträgt <strong>3.072&nbsp;MHz</strong> ($MCLK / 8$). Dieser Takt steuert das serielle Ein- und Ausschieben der einzelnen Datenbits im I²S-Bus.
+  </li>
+  <li>
+    <strong>LRCLK (Left/Right Clock / Word Select) an <code class="text-danger border border-dark">lrclk</code>:</strong> Beträgt <strong>48&nbsp;kHz</strong> ($BCLK / 64$ bzw. $MCLK / 512$). Er definiert die Audio-Abtastrate (Sample Rate) und trennt zwischen linkem Kanal (<code>'0'</code>) und rechtem Kanal (<code>'1'</code>) mit jeweils 32 Bit-Zeitschlitzen pro Kanal (insgesamt 64 Bit Clocks pro Audiocodec-Frame).
+  </li>
+</ul>
+
+<p>
+  Die Entity besitzt den Takteingang <code class="text-danger border border-dark">clk_24_576m</code>, ein synchrones, low-aktives Rücksetzsignal <code class="text-danger border border-dark">rst</code> sowie die Ausgänge <code class="text-danger border border-dark">bclk</code> und <code class="text-danger border border-dark">lrclk</code>.
+  Bei aktivem Reset (<code class="text-danger border border-dark">'0' low-active</code>) werden alle Zähler sowie die Ausgänge synchron auf <code>'0'</code> zurückgesetzt.
+</p>
+
+<details>
+  <summary>Hinweise</summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code> für die Datentypen <code>std_logic</code> und <code>unsigned</code>.
+    </li>
+    <li>
+      Das Rücksetzsignal <code>rst</code> ist <strong>synchron</strong> auszulegen (die Abfrage erfolgt innerhalb von <code>rising_edge(clk_24_576m)</code>).
+    </li>
+    <li>
+      <strong>Taktverhältnisse und Tastverhältnis:</strong>
+      <ul>
+        <li>Für <code>bclk</code> schaltet der Pegel alle 4 Takte von <code>clk_24_576m</code> um (Halbperiode: Zähler <code>0</code> bis <code>3</code>), um ein symmetrisches 50-%-Tastverhältnis bei 3.072&nbsp;MHz zu erzielen.</li>
+        <li>Für <code>lrclk</code> schaltet der Pegel alle 32 Perioden von <code>bclk</code> um (Halbperiode: Zähler <code>0</code> bis <code>31</code>), wodurch die 48&nbsp;kHz mit je 32 Bits für den linken und rechten Audio-Kanal erreicht werden.</li>
+      </ul>
+    </li>
+    <li>
+      Verwenden Sie interne Hilfssignale (z.&nbsp;B. <code>bclk_i</code>, <code>lrclk_i</code>), um den aktuellen Zustand vor der Zuweisung an die Ausgangsports auswerten zu können.
+    </li>
+  </ul>
+</details>
+
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+Betrachten Sie neben möglichen Fehlermeldungen in der Konsole folgende Verläufe im Waveform-Viewer zur Verifikation des I²S-Timings:
+<ul>
+  <li>Testen des synchronen Resets:
+    <div class="alert alert-primary">
+      <code class="text-dark font-weight-bold">rst &lt;= '0'; -- bclk und lrclk müssen nach der nächsten steigenden Taktflanke '0' betragen</code>
+    </div>
+  </li>
+
+  <li>Überprüfung der Frequenzen und Signalperioden (<code>rst &lt;= '1'</code>):
+    <div class="alert alert-primary">
+      <code class="text-dark font-weight-bold">Periode(bclk)  = 8 * Periode(clk_24_576m)  = ~325.52 ns (entspricht 3.072 MHz)</code><br>
+      <code class="text-dark font-weight-bold">Periode(lrclk) = 64 * Periode(bclk)         = ~20.833 µs (entspricht 48 kHz Abtastrate)</code>
+    </div>
+  </li>
+</ul>
+
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}
