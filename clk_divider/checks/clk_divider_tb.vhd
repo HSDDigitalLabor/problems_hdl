@@ -71,14 +71,14 @@ begin
     begin
         -- Test 1: Reset-Verhalten prüfen
         report "Test 1: Reset" severity note;
-        rst <= '1';
+        rst <= '0';
         wait for 4 * CLK_PERIOD;
         assert (bclk = '0' and lrclk = '0')
             report "Reset failed: Ausgaenge nicht auf '0'!" severity error;
         
         -- Reset synchron zur fallenden Flanke freigeben
         wait until falling_edge(clk_24_576m);
-        rst <= '0';
+        rst <= '1';
 
         -- Test 2: BCLK Timing exakt prüfen
         report "Test 2: Pruefe BCLK Timing exakt" severity note;
@@ -95,7 +95,7 @@ begin
             report "BCLK ging nicht nach genau 4 MCLK-Takten HIGH! Zaehler: " & integer'image(mclk_count)
             severity error;
 
-        -- Test 3: LRCLK über 2 volle Perioden vermessen
+        -- Test 3: LRCLK über 2 volle Perioden testen
         report "Test 3: Pruefe LRCLK Umschaltung und Dauer" severity note;
         
         -- Auf die erste reguläre steigende Flanke von LRCLK synchronisieren
@@ -126,7 +126,7 @@ begin
         -- Test 4: Reset waehrend des Betriebs
         report "Test 4: Reset waehrend Betrieb" severity note;
         wait until falling_edge(clk_24_576m);
-        rst <= '1';
+        rst <= '0';
         
         -- Reset lange genug halten (mindestens 1 BCLK-Periode = 8 MCLKs)
         wait for 10 * CLK_PERIOD;
@@ -134,7 +134,7 @@ begin
         
         assert (bclk = '0' and lrclk = '0')
             report "Re-Reset fehlgeschlagen: Ausgaenge nicht auf '0'!" severity error;
-        rst <= '0';
+        rst <= '1';
 
         -- Pufferzeit am Ende für saubere Darstellung in der Waveform
         wait for 10 us;
