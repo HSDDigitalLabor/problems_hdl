@@ -19,6 +19,21 @@
       Verwenden Sie die Bibliothek <code>ieee.std_logic_1164.all</code> für die Datentypen <code>std_logic</code> und <code>std_logic_vector</code>.
     </li>
     <li>
+      Nutzen Sie die folgende VHDL enity als Startpunkt: 
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+
+      entity register_32bit is
+        port (
+          clk       : in  std_logic;
+          reset     : in  std_logic;
+          data_in   : in  std_logic_vector(31 downto 0);
+          data_out  : out std_logic_vector(31 downto 0)
+        );
+      end entity register_32bit;</pre></code>
+    </li>
+    <li>
       Achten Sie darauf, dass das Signal <code>reset</code> <strong>asynchron</strong> ausgewertet wird (d.&nbsp;h. vor der Taktflankenprüfung im <code>process</code>).
     </li>
     <li>
@@ -67,15 +82,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="6062698" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">code --install-extension rjyoung.vscode-modern-vhdl-support ; mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/HSDDigitalLabor/problems_hdl/refs/heads/diginfo2026/sim -o ~/.local/bin/simulation && chmod +x ~/.local/bin/simulation</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_6062698" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="7863522" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">code --install-extension rjyoung.vscode-modern-vhdl-support ; mkdir -p ~/.local/bin && curl -fsSL https://raw.githubusercontent.com/HSDDigitalLabor/problems_hdl/refs/heads/diginfo2026/sim -o ~/.local/bin/simulation && chmod +x ~/.local/bin/simulation</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_7863522" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_6062698" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_7863522" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_6062698','6062698','copyFeedback_6062698']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_7863522','7863522','copyFeedback_7863522']);</script>
 </div>
 
 <p>aus, um die lokale VHDL-Simulationsumgebung in Ihrem Codespace einzurichten.</p>
@@ -89,15 +104,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="3843255" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">mkdir register_32bit</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_3843255" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="6655178" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">mkdir register_32bit</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_6655178" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_3843255" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_6655178" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_3843255','3843255','copyFeedback_3843255']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_6655178','6655178','copyFeedback_6655178']);</script>
 </div>
 
 <p>aus, um einen Ordner namens <code
@@ -112,15 +127,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="9930483" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">cd register_32bit</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_9930483" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="4767680" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">cd register_32bit</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_4767680" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_9930483" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_4767680" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_9930483','9930483','copyFeedback_9930483']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_4767680','4767680','copyFeedback_4767680']);</script>
 </div>
 
 <p>aus, um in dieses Verzeichnis zu wechseln. Der Prompt Ihres Terminals sollte
@@ -134,15 +149,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="1258250" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">code register_32bit.vhd</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_1258250" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="3849981" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">code register_32bit.vhd</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_3849981" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_1258250" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_3849981" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_1258250','1258250','copyFeedback_1258250']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_3849981','3849981','copyFeedback_3849981']);</script>
 </div>
 
 <p>ausführen, um eine Datei namens <code
@@ -162,15 +177,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="3598635" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">simulation HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_3598635" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="6088268" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">simulation HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_6088268" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_3598635" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_6088268" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_3598635','3598635','copyFeedback_3598635']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_6088268','6088268','copyFeedback_6088268']);</script>
 </div>
 
 <p>Nach der Simulation liegt eine Waveform-Datei (.vcd) in ihrem Arbeitsverzeichnis: <code>register_32bit_waveform.vcd</code><br>
@@ -204,15 +219,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="7098688" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">check50 HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_7098688" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="5952496" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">check50 HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_5952496" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_7098688" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_5952496" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_7098688','7098688','copyFeedback_7098688']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_5952496','5952496','copyFeedback_5952496']);</script>
 </div>
 
 <p>
@@ -237,15 +252,15 @@
 
 <div class="alert alert-primary">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="8434334" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">submit50 HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
-        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_8434334" type="button" title="Kopieren">
+        <code class="text-dark font-weight-bold flex-grow-1 nolink" id="4300856" style="word-break: break-all; white-space: pre-wrap; font-family: monospace;">submit50 HSDDigitalLabor/problems_hdl/diginfo2026/register_32bit</code>
+        <button class="btn btn-secondary flex-shrink-0" id="copyCmdBtn_4300856" type="button" title="Kopieren">
             <i class="fa-regular fa-clipboard"></i>
         </button>
     </div>
-    <div id="copyFeedback_8434334" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
+    <div id="copyFeedback_4300856" class="alert alert-danger mt-2 mb-0 d-none" role="alert">
         Fehler beim Kopieren!
     </div>
-    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_8434334','8434334','copyFeedback_8434334']);</script>
+    <script>(window._cpQueue=window._cpQueue||[]).push(['copyCmdBtn_4300856','4300856','copyFeedback_4300856']);</script>
 </div>
 
 <p>
@@ -336,4 +351,4 @@
     }
 })();
 </script>
-<p class="text-muted text-right text-nowrap" style="font-size: 0.6em;">generated 2026-10-02 11:52:18</p>
+<p class="text-muted text-right text-nowrap" style="font-size: 0.6em;">generated 2026-10-06 15:21:04</p>

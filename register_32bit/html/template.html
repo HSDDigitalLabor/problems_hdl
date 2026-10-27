@@ -17,6 +17,21 @@
       Verwenden Sie die Bibliothek <code>ieee.std_logic_1164.all</code> für die Datentypen <code>std_logic</code> und <code>std_logic_vector</code>.
     </li>
     <li>
+      Nutzen Sie die folgende VHDL enity als Startpunkt: 
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+
+      entity register_32bit is
+        port (
+          clk       : in  std_logic;
+          reset     : in  std_logic;
+          data_in   : in  std_logic_vector(31 downto 0);
+          data_out  : out std_logic_vector(31 downto 0)
+        );
+      end entity register_32bit;</pre></code>
+    </li>
+    <li>
       Achten Sie darauf, dass das Signal <code>reset</code> <strong>asynchron</strong> ausgewertet wird (d.&nbsp;h. vor der Taktflankenprüfung im <code>process</code>).
     </li>
     <li>
