@@ -1,0 +1,86 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  Implementieren Sie ein <strong>16-Bin FFT-IP</strong> in VHDL in der Entity <code>fft16_core</code>.
+  Der Kern besitzt ein Taktsignal <code>clk</code>, ein Rücksetzsignal <code>rst</code> (High-active), ein Eingangsgültigkeits-Signal <code>in_valid</code>,
+  sowie den reellen und imaginären Dateneingang (<code>in_re</code> und <code>in_im</code>).
+  Die Ergebnisse werden sequenziell über die Ausgänge <code>out_valid</code>, den Frequenz-Bin-Index <code>bin_idx</code> 
+  sowie die Ausgänge <code>out_re</code> und <code>out_im</code> ausgegeben.
+  Die dazugehörige Architecture für den <code>fft16_core</code> ist in der Datei <a href="https://github.com/HSDDigitalLabor/SourceCodeExamples/blob/main/fft_16_core_arch.vhd" target="_blank">github.com/HSDDigitalLabor/SourceCodeExamples/blob/main/fft_16_core_arch.vhd</a> definiert und soll in Ihre <code>fft.vhd</code> kopiert werden.
+</p>
+<br>
+<details>
+  <summary><strong>Hinweise</strong></summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code>.
+    </li>
+    <li>
+      Nutzen Sie folgende vorgegebene Entity als Startpunkt (Richtung, Datentyp und Wortbreite müssen nach dem Doppelpunkt ergänzt werden): 
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+      use ieee.numeric_std.all;
+
+      entity fft16_core is
+        port (
+          clk       : -- Hier Richtung und Datentyp einfügen;
+          rst       : -- Hier Richtung und Datentyp einfügen;
+          in_valid  : -- Hier Richtung und Datentyp einfügen;
+          in_re     : -- Hier Richtung, Datentyp und Wortbreite einfügen;
+          in_im     : -- Hier Richtung, Datentyp und Wortbreite einfügen;
+          out_valid : -- Hier Richtung und Datentyp einfügen;
+          bin_idx   : -- Hier Richtung, Datentyp und Wortbreite einfügen;
+          out_re    : -- Hier Richtung, Datentyp und Wortbreite einfügen;
+          out_im    : -- Hier Richtung, Datentyp und Wortbreite einfügen
+        );
+      end entity fft16_core;</pre></code>
+    </li>
+  </ul>
+</details>
+<br>
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+<p>
+  Betrachten Sie nach der Simulation die erzeugte Waveform-Datei <code>fft_waveform.vcd</code> in <strong>Vaporview</strong>.
+  Stellen Sie die Ansicht und Formatierungen analog zum folgenden Layout ein:
+</p>
+<ul>
+  <li>
+    <strong>Ordnen Sie die Signale von oben nach unten wie folgt an und stellen Sie mit einem Rechtsklick auf den Signalnamen "Render/Format Type" ein:</strong><br>
+    <code>fft_tb.clk</code><br>
+    <code>fft_tb.in_im[15:0]</code><br>
+    <code>fft_tb.in_valid</code><br>
+    <code>fft_tb.in_re[15:0]</code> (eingestellt auf <em>Render Type -> Linear (signed)</em>)<br>
+    <code>fft_tb.bin_idx[3:0]</code> (Format: <em>Format Type -> Decimal (unsigned)</em>)<br>
+    <code>fft_tb.out_valid</code><br>
+    <code>fft_tb.out_im[15:0]</code> (Format: <em>Decimal (signed)</em>)<br>
+    <code>fft_tb.out_re[15:0]</code> (Format: <em>Decimal (signed)</em>)<br>
+    <code>fft_tb.rst</code>
+  </li>
+  <li>
+    <strong>Erläuterung der 6 Testfälle (Stimuli):</strong><br>
+    Die Testbench füttert den FFT-Kern nacheinander mit 6 verschiedenen Signal-Testfällen (jeweils exakt 1 Periode = 16 Samples bei 48 kHz Abtastrate):
+    <ol>
+      <li><strong>Sinus (0°) @ 3 kHz:</strong> Reiner Sinus mit 0° Phase.</li>
+      <li><strong>Kosinus (0°) @ 3 kHz:</strong> Reiner Kosinus mit 0° Phase.</li>
+      <li><strong>Sinus mit 45° Phase @ 3 kHz:</strong> Sinus mit einer Phasenverschiebung von <sup>&pi;</sup>&frasl;<sub>4</sub> rad.</li>
+      <li><strong>Sinus mit 20° Phase @ 3 kHz:</strong> Sinus mit einer Phasenverschiebung von 20°.</li>
+      <li><strong>Sinus mit 20° Phase @ 6 kHz:</strong> Sinussignal bei 6 kHz mit 20° Phase.</li>
+      <li><strong>Sinus mit 20° Phase @ 9 kHz:</strong> Sinussignal bei 9 kHz mit 20° Phase.</li>
+    </ol>
+  </li>
+</ul>
+<br><p><strong>Aufgabe: </strong>Analysieren Sie anhand der simulierten Waveform eigenständig das Verhalten des FFT-Kerns. Achten Sie dabei insbesondere auf Aspekte wie die Signal-Symmetrie, das Verhalten des DC-Anteils, die Verteilung von Real- und Imaginärteil bei unterschiedlichen Phasenverschiebungen sowie die zeitliche Abfolge der sequenziellen Bin-Ausgabe über <code>bin_idx</code> und <code>out_valid</code>. Betrachten Sie hierfür die Werte der 16 Bins für jeden der sechs Testfälle und machen Sie sich Notizen zu Ihren Beobachtungen. Im Verlauf des Praktikums werden hierzu Verständnisfragen gestellt.</p>
+<br>
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}
