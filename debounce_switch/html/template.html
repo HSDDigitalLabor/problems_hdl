@@ -1,0 +1,76 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  implementieren Sie eine Schaltung zum <strong>Entprellen eines Tasters</strong> in VHDL in der Entity <code>debounce_switch</code>.
+  Mechanische Taster erzeugen beim Betätigen und Loslassen kurzzeitige Spannungsschwankungen (Prellen). Die Schaltung soll das Eingangssignal <code>i_switch</code> filtern und erst dann an den Ausgang <code>o_switch</code> weitergeben, wenn der neue Zustand über die gesamte Entprellzeit <code>DEBOUNCE_TIME_MS</code> stabil geblieben ist.
+  Die Berechnung der benötigten Taktzyklen erfolgt über die Taktfrequenz <code>CLK_FREQ_HZ</code>.
+  Mit jeder steigenden Taktflanke von <code>i_clk</code> wird geprüft, ob sich <code>i_switch</code> vom aktuell gespeicherten Ausgangszustand unterscheidet. Nur wenn diese Abweichung ununterbrochen für die berechnete Anzahl an Taktzyklen anliegt, übernimmt <code>o_switch</code> den neuen Wert. Ändert sich das Signal vorzeitig zurück, wird der interne Zähler auf <code>0</code> zurückgesetzt.
+</p>
+<br>
+<details>
+  <summary><strong>Hinweise</strong></summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code>.
+    </li>
+    <li>
+      Nutzen Sie die folgende VHDL-Entity mit den gegebenen <code>generics</code>, welche eine spätere Anpassung dieser Parameter vor der Synthese in Vivado erlauben,  als Startpunkt: 
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+      use ieee.numeric_std.all;
+
+      entity debounce_switch is
+          generic (
+              CLK_FREQ_HZ      : integer := 24_576_000;
+              DEBOUNCE_TIME_MS : integer := 10
+          );
+          port (
+              i_clk    : in  std_logic;
+              i_switch : in  std_logic;
+              o_switch : out std_logic
+          );
+      end entity debounce_switch;</pre></code>
+    </li>
+    <li>
+      Berechnen Sie das Zählerlimit über eine Konstante: <code>constant c_debounce_limit : integer := (CLK_FREQ_HZ / 1000) * DEBOUNCE_TIME_MS;</code> (für die Standardwerte ergibt dies <code>245760</code> Taktzyklen).
+    </li>
+    <li>
+      Initialisieren Sie das interne Statusregister für den Ausgangszustand sowie das Zählersignal mit <code>0</code> bzw. <code>'0'</code>.
+    </li>
+    <li>
+      Verwenden Sie die Funktion <code>rising_edge(i_clk)</code> zur Erkennung der steigenden Taktflanke im <code>process</code>.
+    </li>
+  </ul>
+</details>
+<br>
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+<p>
+  Betrachten Sie neben den möglichen Warnungen und Fehlermeldungen in der Konsole auch das Verhalten Ihrer Schaltung im Waveform-Viewer:
+</p>
+<ul>
+  <li>
+    Testen des Prellverhaltens (Glitch-Filterung):<br>
+    <code>i_switch &lt;= '1'; -- für weniger als 10 ms (z. B. 1 ms), danach wieder '0'</code><br>
+    Der Ausgang <code>o_switch</code> darf sich nicht ändern und muss konstant auf <code>'0'</code> bleiben.
+  </li>
+  <li>
+    Testen eines stabilen Tastendrucks:<br>
+    <code>i_switch &lt;= '1'; -- konstant halten für mindestens 10 ms (245.760 + 1 Taktzyklus)</code><br>
+    Erst nach Ablauf der vollen Entprellzeit sollte gelten:<br>
+    <code>o_switch = '1'</code>
+  </li>
+</ul>
+
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}
