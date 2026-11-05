@@ -1,0 +1,88 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  implementieren Sie eine Schaltung zur <strong>Auswertung der Betätigungsdauer eines Tasters</strong> in VHDL in der Entity <code>button_duration_detector</code>.
+  Die Schaltung wertet ein bereits entprelltes Tastersignal <code>i_switch</code> aus und unterscheidet zwischen einem kurzen (<code>&lt; 1 s</code>) und einem langen (<code>&gt;= 1 s</code>) Tastendruck.
+  Zusätzlich besitzt die Schaltung ein Taktsignal <code>i_clk</code> sowie ein asynchrones, low-aktives Rücksetzsignal <code>i_reset_n</code>.
+  Wird der Taster mindestens eine Sekunde lang gehalten (entspricht <code>CLK_FREQ_HZ</code> Taktzyklen), soll sofort für genau einen Taktzyklus ein Impuls an <code>o_pulse_long</code> ausgegeben werden.
+  Wird der Taster hingegen vor Ablauf einer Sekunde wieder losgelassen (fallende Flanke an <code>i_switch</code>), wird für genau einen Taktzyklus ein Impuls an <code>o_pulse_short</code> erzeugt. Nach einem bereits ausgelösten langen Tastendruck darf beim anschließenden Loslassen kein zusätzlicher kurzer Impuls mehr entstehen.
+</p>
+<br>
+<details>
+  <summary><strong>Hinweise</strong></summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code>.
+    </li>
+    <li>
+      Nutzen Sie die folgende VHDL-Entity mit dem gegebenen <code>generic</code>, welches eine spätere Anpassung dieses Parameters vor der Synthese in Vivado erlaubt, als Startpunkt:
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+      use ieee.numeric_std.all;
+
+      entity button_duration_detector is
+          generic (
+              CLK_FREQ_HZ : integer := 24_576_000
+          );
+          port (
+              i_clk         : in  std_logic;
+              i_reset_n     : in  std_logic;
+              i_switch      : in  std_logic; -- Entprelltes Tastersignal
+              o_pulse_short : out std_logic; -- 1 Takt Impuls: Druck < 1 s
+              o_pulse_long  : out std_logic  -- 1 Takt Impuls: Druck >= 1 s
+          );
+      end entity button_duration_detector;</pre></code>
+    </li>
+    <li>
+      Achten Sie darauf, dass das Signal <code>i_reset_n</code> <strong>asynchron</strong> ausgewertet wird (d.&nbsp;h. bei <code>i_reset_n = '0'</code> werden alle Ausgänge und internen Signale sofort auf <code>0</code> bzw. <code>'0'</code> gesetzt).
+    </li>
+    <li>
+      Definieren Sie eine Konstante für die Anzahl der Takte pro Sekunde: <code>constant ONE_SEC_TICKS : integer := CLK_FREQ_HZ;</code>.
+    </li>
+    <li>
+      Speichern Sie den vorherigen Zustand von <code>i_switch</code> in einem Hilfssignal (z.&nbsp;B. <code>btn_prev</code>), um das Loslassen des Tasters (<code>btn_prev = '1' and i_switch = '0'</code>) zuverlässig zu erkennen.
+    </li>
+    <li>
+      Merken Sie sich über ein Statussignal (z.&nbsp;B. <code>long_triggered</code>), ob während des aktuellen Tastendrucks bereits <code>o_pulse_long</code> ausgelöst wurde, damit beim Loslassen nicht fälschlicherweise <code>o_pulse_short</code> aktiviert wird.
+    </li>
+    <li>
+      Verwenden Sie die Funktion <code>rising_edge(i_clk)</code> zur Erkennung der steigenden Taktflanke.
+    </li>
+  </ul>
+</details>
+<br>
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+<p>
+  Betrachten Sie neben den möglichen Warnungen und Fehlermeldungen in der Konsole auch die folgenden Szenarien im Waveform-Viewer:
+</p>
+<ul>
+  <li>
+    Testen des asynchronen Resets:<br>
+    <code>i_reset_n &lt;= '0'; -- o_pulse_short und o_pulse_long müssen sofort '0' annehmen</code>
+  </li>
+  <li>
+    Testen eines kurzen Tastendrucks (<code>&lt; 1 s</code>):<br>
+    <code>i_switch &lt;= '1'; -- für weniger als 24.576.000 Takte halten, dann i_switch &lt;= '0';</code><br>
+    Direkt mit der ersten steigenden Taktflanke nach dem Loslassen muss gelten:<br>
+    <code>o_pulse_short = '1'</code> (für exakt einen Taktzyklus) und <code>o_pulse_long = '0'</code>.
+  </li>
+  <li>
+    Testen eines langen Tastendrucks (<code>&gt;= 1 s</code>):<br>
+    <code>i_switch &lt;= '1'; -- für mindestens 24.576.000 Takte halten</code><br>
+    Exakt beim Erreichen von <code>24.576.000</code> Takten muss für einen Taktzyklus <code>o_pulse_long = '1'</code> gelten. Beim späteren Loslassen (<code>i_switch &lt;= '0'</code>) muss <code>o_pulse_short = '0'</code> bleiben.
+  </li>
+</ul>
+
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}
