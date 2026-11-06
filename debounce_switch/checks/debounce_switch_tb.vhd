@@ -6,7 +6,6 @@ entity debounce_switch_tb is
 end entity debounce_switch_tb;
 
 architecture testbench of debounce_switch_tb is
-    -- Component declaration
     component debounce_switch is
         generic (
             CLK_FREQ_HZ      : integer := 24_576_000;
@@ -19,21 +18,18 @@ architecture testbench of debounce_switch_tb is
         );
     end component;
 
-    -- Default-Konstanten passend zur Entity
     constant c_clk_freq_hz      : integer := 24_576_000;
     constant c_debounce_time_ms : integer := 10;
-    constant c_debounce_limit   : integer := (c_clk_freq_hz / 1000) * c_debounce_time_ms; -- 245760 Takte
+    constant c_debounce_limit   : integer := (c_clk_freq_hz / 1000) * c_debounce_time_ms;
 
-    -- Taktperiode für ca. 24,576 MHz (40,69 ns -> 40690 ps für gerade Teilbarkeit durch 2)
     constant CLK_PERIOD : time := 40690 ps;
 
-    -- Signals
     signal i_clk    : std_logic := '0';
     signal i_switch : std_logic := '0';
     signal o_switch : std_logic;
+    signal sim_done : boolean   := false;
 
 begin
-    -- Component instantiation (nutzt die Default-Generics)
     dut : debounce_switch
         port map (
             i_clk    => i_clk,
@@ -41,57 +37,49 @@ begin
             o_switch => o_switch
         );
 
-    -- Clock generation
-    i_clk <= not i_clk after CLK_PERIOD / 2;
+    -- Clock generation (stoppt automatisch, sobald sim_done = true ist)
+    i_clk <= not i_clk after CLK_PERIOD / 2 when not sim_done else '0';
 
-    -- Testbench process
     process
     begin
-        -- Initialisierung abwarten
         wait for 10 * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Initialer Zustand von o_switch ist nicht '0'!" severity failure;
 
-        -- Test 1: Tasterprellen beim Einschalten (Impulse kürzer als c_debounce_limit)
+        -- Test 1: Tasterprellen beim Einschalten
         report "Test 1: Simuliere Prellen (Bouncing) auf '1'" severity note;
         i_switch <= '1';
-        wait for 5000 * CLK_PERIOD; -- Zu kurz (~0,2 ms)
+        wait for 5000 * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 1a - Ausgang hat bei kurzem Impuls zu frueh geschaltet!" severity failure;
 
         i_switch <= '0';
         wait for 1000 * CLK_PERIOD;
 
-        -- Zweiter längerer Prell-Impuls knapp unterhalb der Schwelle
         i_switch <= '1';
         wait for (c_debounce_limit - 10) * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 1b - Ausgang hat kurz vor Ablauf der Entprellzeit geschaltet!" severity failure;
 
-        -- Kurzzeitig zurück auf '0' -> Zähler muss zurückgesetzt werden
         i_switch <= '0';
         wait for 10 * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 1c - Ausgang ist nach Zaehler-Reset nicht auf '0' geblieben!" severity failure;
 
         -- Test 2: Stabiler Tastendruck ('0' -> '1')
         report "Test 2: Stabiler Tastendruck ('0' -> '1')" severity note;
-        -- Synchronisation zur fallenden Flanke für präzises Taktzählen
         wait until falling_edge(i_clk);
         i_switch <= '1';
 
-        -- Nach (c_debounce_limit - 1) Takten darf der Ausgang noch NICHT umgeschaltet haben
         wait for (c_debounce_limit - 1) * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 2a - Ausgang hat mindestens 2 Takte zu frueh auf '1' geschaltet!" severity failure;
 
-        -- Nach genau c_debounce_limit + 1 steigenden Flanken ist der Zustand übernommen
         wait for 2 * CLK_PERIOD;
         assert o_switch = '1' report "FAIL: Test 2b - Ausgang hat nach Ablauf der Entprellzeit nicht auf '1' geschaltet!" severity failure;
 
-        -- Zustand noch etwas halten
         wait for 1000 * CLK_PERIOD;
         assert o_switch = '1' report "FAIL: Test 2c - Ausgang bleibt nicht stabil auf '1'!" severity failure;
 
         -- Test 3: Tasterprellen beim Loslassen ('1' -> '0')
         report "Test 3: Simuliere Prellen (Bouncing) auf '0'" severity note;
         i_switch <= '0';
-        wait for (c_debounce_limit / 2) * CLK_PERIOD; -- Halbe Entprellzeit (~5 ms)
+        wait for (c_debounce_limit / 2) * CLK_PERIOD;
         assert o_switch = '1' report "FAIL: Test 3 - Ausgang ist bei kurzem Einbruch auf '0' abgefallen!" severity failure;
 
         i_switch <= '1';
@@ -103,17 +91,15 @@ begin
         wait until falling_edge(i_clk);
         i_switch <= '0';
 
-        -- Prüfen kurz vor Ablauf der Entprellzeit
         wait for (c_debounce_limit - 1) * CLK_PERIOD;
         assert o_switch = '1' report "FAIL: Test 4a - Ausgang hat zu frueh auf '0' geschaltet!" severity failure;
 
-        -- Prüfen nach Ablauf der Entprellzeit
         wait for 2 * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 4b - Ausgang hat nach Entprellzeit nicht auf '0' geschaltet!" severity failure;
 
         -- End simulation
-        report "PASS: Simulation erfolgreich beendet. Alle Tests bestanden." severity note;
-        std.env.stop; -- Beendet die Simulation automatisch (VHDL-2008), alternativ: wait;
+        report "Simulation finished." severity note;
+        sim_done <= true;
         wait;
     end process;
 
