@@ -20,9 +20,10 @@ architecture testbench of debounce_switch_tb is
 
     constant c_clk_freq_hz      : integer := 24_576_000;
     constant c_debounce_time_ms : integer := 10;
-    constant c_debounce_limit   : integer := (c_clk_freq_hz / 1000) * c_debounce_time_ms;
+    constant c_debounce_limit   : integer := (c_clk_freq_hz / 1000) * c_debounce_time_ms; -- 245760 Takte
 
-    constant CLK_PERIOD : time := 40690 ps;
+    -- 50 ps Taktperiode, damit >750.000 Takte locker in das 100-us-Zeitfenster passen
+    constant CLK_PERIOD : time := 50 ps;
 
     signal i_clk    : std_logic := '0';
     signal i_switch : std_logic := '0';
