@@ -142,6 +142,8 @@ begin
         assert o_pulse_short = '0' and o_pulse_long = '0'
             report "FAIL: Test 4b - Nach Reset wurde faelschlicherweise ein Impuls erzeugt!" severity failure;
 
+        wait for 200 * CLK_PERIOD;
+
         -- End simulation
         report "Simulation finished." severity note;
         sim_done <= true;
