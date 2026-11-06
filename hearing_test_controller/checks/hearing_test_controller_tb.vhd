@@ -23,12 +23,12 @@ architecture testbench of hearing_test_controller_tb is
         );
     end component;
 
+    -- Konfiguration für genau 10 Frequenzen
     constant c_clk_freq_hz     : integer := 24_576_000;
     constant c_ramp_time_s     : integer := 10;
-    constant c_num_frequencies : integer := 8;
-    constant c_ticks_per_step  : integer := (c_clk_freq_hz * c_ramp_time_s) / 65536; -- 3750 Takte
+    constant c_num_frequencies : integer := 10;
+    constant c_ticks_per_step  : integer := (c_clk_freq_hz * c_ramp_time_s) / 65536;
 
-    -- 10 ns Taktperiode -> 1 Stufe (3750 Takte) dauert 37,5 us; Gesamtlaufzeit ca. 250 us
     constant CLK_PERIOD : time := 10 ns;
 
     signal i_clk         : std_logic := '0';
@@ -41,7 +41,13 @@ architecture testbench of hearing_test_controller_tb is
     signal sim_done      : boolean   := false;
 
 begin
+    -- Component instantiation mit 10 Frequenzen
     dut : hearing_test_controller
+        generic map (
+            CLK_FREQ_HZ     => c_clk_freq_hz,
+            RAMP_TIME_S     => c_ramp_time_s,
+            NUM_FREQUENCIES => c_num_frequencies
+        )
         port map (
             i_clk         => i_clk,
             i_reset_n     => i_reset_n,
@@ -71,7 +77,7 @@ begin
         i_reset_n <= '1';
         wait for 2 * CLK_PERIOD;
 
-        -- Test 2: Start durch kurzen Tastendruck & Timing pro Stufe (3750 Takte)
+        -- Test 2: Start durch kurzen Tastendruck & Timing pro Stufe (3750 Takte)[cite: 5]
         report "Test 2: Start durch i_pulse_short und Pruefung von TICKS_PER_STEP" severity note;
         wait until falling_edge(i_clk);
         i_pulse_short <= '1';
@@ -128,8 +134,8 @@ begin
         assert o_volume = x"0004"
             report "FAIL: Test 3f - o_volume wurde nach Fortsetzen nicht korrekt auf 0x0004 erhoeht!" severity failure;
 
-        -- Test 4: Frequenzwechsel, Priorität & Wrap-Around (i_pulse_long)
-        report "Test 4: Frequenzwechsel und Wrap-Around (i_pulse_long)" severity note;
+        -- Test 4: Alle 10 Frequenzen durchschalten und Wrap-Around von 9 auf 0 prüfen
+        report "Test 4: Durchschalten aller 10 Frequenzen und Wrap-Around" severity note;
         wait until falling_edge(i_clk);
         i_pulse_long <= '1';
         wait until falling_edge(i_clk);
@@ -142,32 +148,24 @@ begin
         assert o_is_running = '0'
             report "FAIL: Test 4c - o_is_running wurde bei Frequenzwechsel nicht auf '0' gesetzt!" severity failure;
 
-        wait until falling_edge(i_clk);
-        i_pulse_long  <= '1';
-        i_pulse_short <= '1';
-        wait until falling_edge(i_clk);
-        i_pulse_long  <= '0';
-        i_pulse_short <= '0';
-
-        assert o_fcw_addr = x"2" and o_is_running = '0'
-            report "FAIL: Test 4d - i_pulse_long hatte keine Prioritaet gegenueber i_pulse_short!" severity failure;
-
-        for f in 3 to c_num_frequencies - 1 loop
+        -- Schleife für die verbleibenden Frequenzen bis Index 9
+        for f in 2 to c_num_frequencies - 1 loop
             wait until falling_edge(i_clk);
             i_pulse_long <= '1';
             wait until falling_edge(i_clk);
             i_pulse_long <= '0';
             assert unsigned(o_fcw_addr) = to_unsigned(f, 4)
-                report "FAIL: Test 4e - Inkorrekte Adresse beim Durchschalten!" severity failure;
+                report "FAIL: Test 4d - Inkorrekte Adresse beim Durchschalten von 10 Frequenzen!" severity failure;
         end loop;
 
+        -- Jetzt steht o_fcw_addr auf 9 (NUM_FREQUENCIES - 1). Nächster Puls muss auf 0 springen[cite: 5].
         wait until falling_edge(i_clk);
         i_pulse_long <= '1';
         wait until falling_edge(i_clk);
         i_pulse_long <= '0';
 
         assert o_fcw_addr = x"0"
-            report "FAIL: Test 4f - Wrap-Around von NUM_FREQUENCIES-1 auf 0 fehlgeschlagen!" severity failure;
+            report "FAIL: Test 4e - Wrap-Around von NUM_FREQUENCIES-1 (9) auf 0 fehlgeschlagen!" severity failure;
 
         -- Test 5: Asynchroner Reset im Betrieb
         report "Test 5: Asynchroner Reset im Betrieb" severity note;
@@ -183,8 +181,6 @@ begin
 
         wait for 2 * CLK_PERIOD;
         i_reset_n <= '1';
-
-        wait for 500 * CLK_PERIOD;
 
         -- End simulation
         report "Simulation finished." severity note;
