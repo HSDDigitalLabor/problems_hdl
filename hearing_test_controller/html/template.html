@@ -1,0 +1,107 @@
+{% include "header.html" %}
+
+<p>{% include "file.html" %}
+  implementieren Sie eine Steuerung für einen <strong>automatisierten Hörtest</strong> in VHDL in der Entity <code>hearing_test_controller</code>.
+  Die Schaltung verarbeitet die Impulse einer Taster-Auswertung (<code>i_pulse_short</code> für kurze Tastendrücke und <code>i_pulse_long</code> für lange Tastendrücke) und besitzt ein Taktsignal <code>i_clk</code> sowie ein asynchrones, low-aktives Rücksetzsignal <code>i_reset_n</code>.
+  Über den 4-Bit-Ausgang <code>o_fcw_addr</code> wird ein Block-RAM (BRAM) adressiert, in dem eine Look-Up-Table (LUT) mit <code>NUM_FREQUENCIES</code> verschiedenen Frequency Control Words (FCW) für einen DDS-Signalgenerator (Direct Digital Synthesis) abgelegt ist.
+  Der 16-Bit-Ausgang <code>o_volume</code> gibt ein vorzeichenloses (unsigned) Lautstärke-Steuerwort an einen nachgeschalteten Multiplizierer aus, der das Ausgangssignal des DDS skaliert.
+  Der Ausgang <code>o_is_running</code> steuert eine Status-LED (z.&nbsp;B. über ein VIO-Core) an und signalisiert, ob die Lautstärke aktuell automatisch erhöht wird (Rampe aktiv).
+</p>
+<p>
+  <strong>Funktionsweise bei steigender Taktflanke von <code>i_clk</code>:</strong>
+</p>
+<ul>
+  <li>
+    <strong>Frequenzwechsel &amp; Reset (<code>i_pulse_long = '1'</code>, höchste Priorität):</strong>
+    Die Lautstärkerampe wird gestoppt (<code>o_is_running</code> auf <code>'0'</code>), die Lautstärke <code>o_volume</code> sowie der interne Taktzähler werden auf <code>0</code> zurückgesetzt und die BRAM-Adresse <code>o_fcw_addr</code> wird um <code>1</code> erhöht. Nach Erreichen der höchsten Adresse (<code>NUM_FREQUENCIES - 1</code>) springt die Adresse wieder auf <code>0</code> zurück.
+  </li>
+  <li>
+    <strong>Start / Stopp toggeln (<code>i_pulse_short = '1'</code>):</strong>
+    Schaltet den Status der Lautstärkerampe um (Start bzw. Pause) und setzt den internen Taktzähler für die Stufendauer auf <code>0</code> zurück. Der aktuelle Lautstärkewert bleibt beim Pausieren erhalten.
+  </li>
+  <li>
+    <strong>Automatisches Hochrampen (wenn Rampe aktiv):</strong>
+    Innerhalb der Zeit <code>RAMP_TIME_S</code> wird die Lautstärke gleichmäßig in 65536 Schritten erhöht. Dazu wird jeweils nach <code>TICKS_PER_STEP = (CLK_FREQ_HZ * RAMP_TIME_S) / 65536</code> Taktzyklen (Zähler von <code>0</code> bis <code>TICKS_PER_STEP - 1</code>) der Wert von <code>o_volume</code> um <code>1</code> inkrementiert. Erreicht <code>o_volume</code> das Maximum <code>0xFFFF</code>, stoppt die Rampe beim nächsten Schritt automatisch (<code>o_is_running</code> wird <code>'0'</code>) und der Lautstärkewert bleibt bei <code>0xFFFF</code> stehen.
+  </li>
+</ul>
+<br>
+<details>
+  <summary><strong>Hinweise</strong></summary>
+  <ul>
+    <li>
+      Verwenden Sie die Bibliotheken <code>ieee.std_logic_1164.all</code> und <code>ieee.numeric_std.all</code>.
+    </li>
+    <li>
+      Nutzen Sie die folgende VHDL-Entity mit den gegebenen <code>generics</code>, welche eine spätere Anpassung dieser Parameter vor der Synthese in Vivado erlauben, als Startpunkt:
+      <code><pre>
+      library ieee;
+      use ieee.std_logic_1164.all;
+      use ieee.numeric_std.all;
+
+      entity hearing_test_controller is
+          generic (
+              CLK_FREQ_HZ     : integer := 24_576_000;
+              RAMP_TIME_S     : integer := 10;
+              NUM_FREQUENCIES : integer := 8
+          );
+          port (
+              i_clk         : in  std_logic;
+              i_reset_n     : in  std_logic;
+              i_pulse_short : in  std_logic;
+              i_pulse_long  : in  std_logic;
+              
+              o_fcw_addr    : out std_logic_vector(3 downto 0); -- Geht direkt an BRAM addra
+              o_volume      : out std_logic_vector(15 downto 0); -- Geht an Multiplier IP
+              o_is_running  : out std_logic                      -- Status-LED
+          );
+      end entity hearing_test_controller;</pre></code>
+    </li>
+    <li>
+      Achten Sie darauf, dass das Signal <code>i_reset_n</code> <strong>asynchron</strong> ausgewertet wird (d.&nbsp;h. bei <code>i_reset_n = '0'</code> werden alle internen Register und Zähler sofort auf <code>0</code> gesetzt).
+    </li>
+    <li>
+      Berechnen Sie die Anzahl der Takte pro Lautstärkestufe über eine Konstante:
+      <code>constant TICKS_PER_STEP : integer := (CLK_FREQ_HZ * RAMP_TIME_S) / 65536;</code> (für die Standardwerte ergibt dies exakt <code>3750</code> Taktzyklen pro Stufe).
+    </li>
+    <li>
+      Verwenden Sie intern den Datentyp <code>unsigned</code> für die BRAM-Adresse und die Lautstärke und konvertieren Sie diese bei der Zuweisung an die Ausgangsports mittels <code>std_logic_vector(...)</code>.
+    </li>
+    <li>
+      Verwenden Sie die Funktion <code>rising_edge(i_clk)</code> zur Erkennung der steigenden Taktflanke.
+    </li>
+  </ul>
+</details>
+<br>
+<!-- {% include "demo.html" %} -->
+
+{% include "before_you_begin_hdl.html" %}
+
+{% include "how_to_test_head_hdl.html" %}
+
+<p>
+  Betrachten Sie neben den möglichen Warnungen und Fehlermeldungen in der Konsole auch die folgenden Szenarien im Waveform-Viewer:
+</p>
+<ul>
+  <li>
+    Testen des asynchronen Resets:<br>
+    <code>i_reset_n &lt;= '0'; -- o_fcw_addr = 0x0, o_volume = 0x0000, o_is_running = '0'</code>
+  </li>
+  <li>
+    Testen von Start/Stopp und Hochrampen (<code>i_pulse_short</code>):<br>
+    <code>i_pulse_short &lt;= '1'; -- für 1 Taktzyklus</code><br>
+    Nach der steigenden Taktflanke gilt <code>o_is_running = '1'</code>. Alle <code>3750</code> Taktzyklen erhöht sich <code>o_volume</code> um <code>1</code>. Ein erneuter Impuls an <code>i_pulse_short</code> pausiert den Vorgang (<code>o_is_running = '0'</code>), wobei <code>o_volume</code> seinen aktuellen Wert behält.
+  </li>
+  <li>
+    Testen des Frequenzwechsels (<code>i_pulse_long</code>):<br>
+    <code>i_pulse_long &lt;= '1'; -- für 1 Taktzyklus</code><br>
+    Nach der steigenden Taktflanke wird <code>o_fcw_addr</code> um <code>1</code> inkrementiert (Wrap-Around von <code>7</code> auf <code>0</code> bei <code>NUM_FREQUENCIES = 8</code>), während <code>o_volume</code> auf <code>0x0000</code> und <code>o_is_running</code> auf <code>'0'</code> zurückgesetzt werden.
+  </li>
+</ul>
+
+{% include "how_to_test_auto_hdl.html" %}
+
+{% include "how_to_submit.html" %}
+
+{% include "how_to_mark_in_moodle.html" %}
+
+{% include "footer.html" %}
