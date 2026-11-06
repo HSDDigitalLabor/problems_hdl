@@ -98,6 +98,9 @@ begin
         wait for 2 * CLK_PERIOD;
         assert o_switch = '0' report "FAIL: Test 4b - Ausgang hat nach Entprellzeit nicht auf '0' geschaltet!" severity failure;
 
+
+        wait for 15000 * CLK_PERIOD;
+
         -- End simulation
         report "Simulation finished." severity note;
         sim_done <= true;
