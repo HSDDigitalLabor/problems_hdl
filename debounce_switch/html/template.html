@@ -55,6 +55,9 @@
 </p>
 <ul>
   <li>
+    Bitte beachten Sie, dass bei dieser Simulation die Zeitachse in Vaporview nicht korrekt ist: Bei 24,576 MHz wären 10 ms Entprellzeit exakt 245.760 Taktzyklen. Eine solch lange Simulationszeit ist sehr rechenaufwändig, daher wurde hier die Frequenz für den Test künstlich heruntergerechnet.
+  </li>
+  <li>
     Testen des Prellverhaltens (Glitch-Filterung):<br>
     <code>i_switch &lt;= '1'; -- für weniger als 10 ms (z. B. 1 ms), danach wieder '0'</code><br>
     Der Ausgang <code>o_switch</code> darf sich nicht ändern und muss konstant auf <code>'0'</code> bleiben.
